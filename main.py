@@ -2,6 +2,9 @@ import os
 import requests
 import time
 
+global serverIP
+serverIP = 'localhost:5000'
+
 def main():
     while True:
         print("What would you like to do? (1, 2)")
@@ -20,7 +23,7 @@ def main():
             formatted_name, student_id, classes = add_user_classes()
             # Send data to server
             try:
-                response = requests.get(f"http://localhost:5000/add/{formatted_name}/{student_id}/{classes}")
+                response = requests.get(f"http://{serverIP}/add/{formatted_name}/{student_id}/{classes}")
                 if response.status_code == 200:
                     print("\nSuccessfully added your classes to the database!")
                 else:
@@ -50,10 +53,10 @@ def check_user_classes_with_others():
             
         try:
             if identifier.isdigit() and len(identifier) >= 4:
-                response = requests.get(f"http://localhost:5000/get/student/{identifier}")
+                response = requests.get(f"http://{serverIP}/get/student/{identifier}")
             elif len(identifier.split()) >= 2:
                 formatted_name = identifier.replace(" ", "_")
-                response = requests.get(f"http://localhost:5000/get/student/name/{formatted_name}")
+                response = requests.get(f"http://{serverIP}/get/student/name/{formatted_name}")
             else:
                 print("Please enter a valid student ID (4+ digits) or full name (first and last name)")
                 continue
@@ -90,7 +93,7 @@ def check_user_classes_with_others():
             # Show final match before exiting
             try:
                 classes_string = ",".join(classes)
-                response = requests.get(f"http://localhost:5000/get/{classes_string}")
+                response = requests.get(f"http://{serverIP}/get/{classes_string}")
                 
                 if response.status_code == 200 and response.json().get('match'):
                     match_data = response.json()['match']
@@ -115,7 +118,7 @@ def check_user_classes_with_others():
         # Request matches from server
         try:
             classes_string = ",".join(classes)
-            response = requests.get(f"http://localhost:5000/get/{classes_string}")
+            response = requests.get(f"http://{serverIP}/get/{classes_string}")
             
             if response.status_code == 200 and response.json().get('match'):
                 match_data = response.json()['match']

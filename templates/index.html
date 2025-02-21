@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Do I Share A Class With Anyone?</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Do I Share A Class With Anyone?</h1>
+            <div class="server-config">
+                <input type="text" id="serverIP" placeholder="Server IP" value="localhost:5000">
+                <button onclick="updateServer()">Update Server</button>
+            </div>
+        </header>
+
+        <div class="content">
+            <div class="column left">
+                <h2>Add Your Classes</h2>
+                <div class="input-form">
+                    <input type="text" id="fullName" placeholder="Full Name (First and Last)">
+                    <input type="text" id="studentId" placeholder="Student ID (minimum 4 digits)">
+                    <div class="add-classes">
+                        <!-- Class inputs will be added here -->
+                    </div>
+                    <button onclick="addClassInput(document.querySelector('.add-classes'))">+ Add Class</button>
+                    <button onclick="submitClasses()" class="submit-btn">Submit</button>
+                </div>
+            </div>
+
+            <div class="column right">
+                <h2>Find Class Links</h2>
+                <div class="search-form">
+                    <div class="identifier-section">
+                        <input type="text" id="searchIdentifier" placeholder="Student ID or Full Name">
+                        <button onclick="searchStudent()">Search Student</button>
+                    </div>
+                    <div id="searchResults"></div>
+                    <div class="search-classes">
+                        <!-- Found or manually added classes will appear here -->
+                    </div>
+                    <div class="manual-class-entry" style="display: none;">
+                        <button onclick="addClassInput(document.querySelector('.search-classes'))">+ Add Class</button>
+                    </div>
+                    <button onclick="searchLinks()" class="search-btn">Find Links</button>
+                </div>
+                <div id="matchResults">
+                    <!-- Match results will be displayed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>

@@ -1,10 +1,16 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
+from flask_cors import CORS
 import sqlite3
 from typing import List, Tuple
 
 ADMIN_PASSWORD = "password123"  # Change this to your desired password
 
 app = Flask(__name__)
+CORS(app)  # Enable CORS
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 # Database initialization
 def init_db():
