@@ -1,75 +1,12 @@
-from flask import Flask, jsonify, render_template
+from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import requests
-from requests.exceptions import Timeout, RequestException
-import os
 import sqlite3
 from typing import List, Tuple
-import logging
-from datetime import datetime
 
-ADMIN_PASSWORD = "password123"
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(__name__)
-
-# Create a file handler
-if not os.path.exists('logs'):
-    os.makedirs('logs')
-fh = logging.FileHandler(f'logs/app-{datetime.now().strftime("%Y%m%d")}.log')
-fh.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-fh.setFormatter(formatter)
-logger.addHandler(fh)
+ADMIN_PASSWORD = "password123"  # Change this to your desired password
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS
-
-# Determine environment and set appropriate BASE_URL
-IS_PRODUCTION = os.environ.get('FLASK_ENV') == 'production'
-BASE_URL = (
-    "https://do-i-share-a-class-with-anyone-7a9e11f397f2.herokuapp.com" 
-    if IS_PRODUCTION 
-    else "http://localhost:5000"
-)
-TIMEOUT_SECONDS = 25
-
-logger.info(f"Running in {'production' if IS_PRODUCTION else 'development'} mode")
-logger.info(f"Using BASE_URL: {BASE_URL}")
-
-def make_request(endpoint: str) -> tuple:
-    full_url = f"{BASE_URL}/{endpoint}"
-    logger.info(f"Making request to: {full_url}")
-    
-    try:
-        logger.debug(f"Request started: {full_url}")
-        response = requests.get(full_url, timeout=TIMEOUT_SECONDS)
-        logger.debug(f"Response status: {response.status_code}")
-        logger.debug(f"Response content: {response.text[:500]}")  # Log first 500 chars
-        
-        json_response = response.json()
-        logger.info(f"Request successful: {endpoint}")
-        return jsonify(json_response), 200
-        
-    except Timeout:
-        logger.error(f"Request timed out after {TIMEOUT_SECONDS}s: {full_url}")
-        return jsonify({
-            "status": "error",
-            "message": f"Request timed out after {TIMEOUT_SECONDS} seconds. Please try again."
-        }), 504
-        
-    except RequestException as e:
-        logger.error(f"Request failed: {full_url}", exc_info=True)
-        return jsonify({
-            "status": "error",
-            "message": f"API request failed: {str(e)}",
-            "details": {
-                "error_type": type(e).__name__,
-                "url": full_url,
-                "timeout": TIMEOUT_SECONDS
-            }
-        }), 500
 
 @app.route('/')
 def index():
@@ -88,6 +25,9 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
+    
+    # Add these constants at the top of the file, after the imports
+
 
 # Add these new routes before the if __name__ == '__main__' block
 @app.route('/clear/<password>')
@@ -143,21 +83,121 @@ def get_db() -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
 
 @app.route('/add/<name>/<student_id>/<classes>')
 def add_student(name: str, student_id: str, classes: str):
-    return make_request(f"add/{name}/{student_id}/{classes}")
+    try:
+        conn, c = get_db()
+        # Replace underscores with spaces in name
+        name = name.replace('_', ' ')
+        # Insert or update student data
+        c.execute('''
+            INSERT OR REPLACE INTO students (student_id, full_name, classes)
+            VALUES (?, ?, ?)
+        ''', (student_id, name, classes))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "message": "Student added successfully"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+# Add these new routes before the if __name__ == '__main__' block
 
 @app.route('/get/student/<identifier>')
 def get_student_by_id(identifier: str):
-    return make_request(f"get/student/{identifier}")
+    try:
+        conn, c = get_db()
+        c.execute('SELECT student_id, full_name, classes FROM students WHERE student_id = ?', (identifier,))
+        student = c.fetchone()
+        conn.close()
+        
+        if student:
+            return jsonify({
+                "status": "success",
+                "student_id": student[0],
+                "name": student[1],
+                "classes": student[2]
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Student not found"
+            }), 404
+            
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/get/student/name/<name>')
 def get_student_by_name(name: str):
-    return make_request(f"get/student/name/{name}")
+    try:
+        conn, c = get_db()
+        # Replace underscores with spaces in name
+        name = name.replace('_', ' ')
+        c.execute('SELECT student_id, full_name, classes FROM students WHERE full_name = ?', (name,))
+        student = c.fetchone()
+        conn.close()
+        
+        if student:
+            return jsonify({
+                "status": "success",
+                "student_id": student[0],
+                "name": student[1],
+                "classes": student[2]
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "Student not found"
+            }), 404
+            
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/get/<classes>')
 def get_students(classes: str):
-    return make_request(f"get/{classes}")
+    try:
+        conn, c = get_db()
+        # Split input classes into a set
+        input_classes = set(classes.split(','))
+        
+        # Get all students from database
+        c.execute('SELECT student_id, full_name, classes FROM students')
+        students = c.fetchall()
+        
+        # Find student with most matching classes, excluding exact matches
+        best_match = None
+        max_matches = 0
+        
+        for student in students:
+            student_classes = set(student[2].split(','))
+            matches = len(input_classes.intersection(student_classes))
+            
+            # Skip if all classes match (likely same person)
+            if input_classes == student_classes:
+                continue
+                
+            if matches > max_matches:
+                max_matches = matches
+                best_match = {
+                    "name": student[1],
+                    "student_id": student[0],
+                    "classes": list(student_classes),
+                    "matching_classes": list(input_classes.intersection(student_classes))
+                }
+        
+        conn.close()
+        
+        if best_match:
+            return jsonify({
+                "status": "success",
+                "match": best_match
+            })
+        else:
+            return jsonify({
+                "status": "error",
+                "message": "No other students with matching classes found"
+            }), 404
+            
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
     init_db()
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=5000, debug=True)
