@@ -1,0 +1,4 @@
+Flask==2.0.1
+Flask-Cors==3.0.10
+boto3==1.26.137
+awscli==1.27.137

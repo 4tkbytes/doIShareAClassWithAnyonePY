@@ -3,10 +3,14 @@ from flask_cors import CORS
 import sqlite3
 from typing import List, Tuple
 
-ADMIN_PASSWORD = "password123"  # Change this to your desired password
+ADMIN_PASSWORD = ":;—"
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS
+CORS(app, resources={r"/*": {
+    "origins": ["https://yourdomain.com", "http://localhost:5000"],
+    "methods": ["GET", "POST"],
+    "allow_headers": ["Content-Type"]
+}})
 
 @app.route('/')
 def index():
