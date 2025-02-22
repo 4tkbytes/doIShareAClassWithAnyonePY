@@ -9,6 +9,9 @@ echo "Deploying frontend to GitHub Pages..."
 git checkout --orphan gh-pages
 git rm -rf .
 
+# Ensure the working directory is correct
+cd /app
+
 # Copy frontend files
 cp -r frontend/* .
 touch .nojekyll
@@ -20,7 +23,7 @@ git push -f origin gh-pages
 
 echo "Deploying backend to AWS Elastic Beanstalk..."
 cd backend
-eb init -p python-3.9 class-share-app --region us-east-1
+eb init -p python-3.9 class-share-app --region ap-southeast-2
 eb deploy
 
 echo "Deployment complete!"
