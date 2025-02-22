@@ -5,8 +5,23 @@ from requests.exceptions import Timeout, RequestException
 import os
 import sqlite3
 from typing import List, Tuple
+import logging
+from datetime import datetime
 
 ADMIN_PASSWORD = "password123"
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+# Create a file handler
+if not os.path.exists('logs'):
+    os.makedirs('logs')
+fh = logging.FileHandler(f'logs/app-{datetime.now().strftime("%Y%m%d")}.log')
+fh.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+logger.addHandler(fh)
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS
@@ -20,25 +35,40 @@ BASE_URL = (
 )
 TIMEOUT_SECONDS = 25
 
-print(f"Running in {'production' if IS_PRODUCTION else 'development'} mode")
-print(f"Using BASE_URL: {BASE_URL}")
+logger.info(f"Running in {'production' if IS_PRODUCTION else 'development'} mode")
+logger.info(f"Using BASE_URL: {BASE_URL}")
 
 def make_request(endpoint: str) -> tuple:
+    full_url = f"{BASE_URL}/{endpoint}"
+    logger.info(f"Making request to: {full_url}")
+    
     try:
-        response = requests.get(
-            f"{BASE_URL}/{endpoint}", 
-            timeout=TIMEOUT_SECONDS
-        )
-        return jsonify(response.json()), 200
+        logger.debug(f"Request started: {full_url}")
+        response = requests.get(full_url, timeout=TIMEOUT_SECONDS)
+        logger.debug(f"Response status: {response.status_code}")
+        logger.debug(f"Response content: {response.text[:500]}")  # Log first 500 chars
+        
+        json_response = response.json()
+        logger.info(f"Request successful: {endpoint}")
+        return jsonify(json_response), 200
+        
     except Timeout:
+        logger.error(f"Request timed out after {TIMEOUT_SECONDS}s: {full_url}")
         return jsonify({
             "status": "error",
-            "message": "Request timed out. Please try again."
+            "message": f"Request timed out after {TIMEOUT_SECONDS} seconds. Please try again."
         }), 504
+        
     except RequestException as e:
+        logger.error(f"Request failed: {full_url}", exc_info=True)
         return jsonify({
             "status": "error",
-            "message": f"API request failed: {str(e)}"
+            "message": f"API request failed: {str(e)}",
+            "details": {
+                "error_type": type(e).__name__,
+                "url": full_url,
+                "timeout": TIMEOUT_SECONDS
+            }
         }), 500
 
 @app.route('/')
