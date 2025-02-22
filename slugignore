@@ -1,0 +1,2 @@
+# Don't ignore the database during slug compilation
+!students.db

@@ -4,6 +4,7 @@ import sqlite3
 from typing import List, Tuple
 import os
 from dotenv import load_dotenv
+import os.path
 
 # Load environment variables
 load_dotenv()
@@ -12,6 +13,8 @@ load_dotenv()
 ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
 if not ADMIN_PASSWORD:
     raise ValueError("ADMIN_PASSWORD environment variable must be set")
+
+DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'students.db')
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS with SSL support
@@ -33,17 +36,19 @@ def index():
 
 def init_db():
     with app.app_context():
-        conn = sqlite3.connect('students.db')
-        c = conn.cursor()
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS students (
-                student_id TEXT PRIMARY KEY,
-                full_name TEXT NOT NULL,
-                classes TEXT NOT NULL
-            )
-        ''')
-        conn.commit()
-        conn.close()
+        # Only create if doesn't exist
+        if not os.path.exists(DB_PATH):
+            conn = sqlite3.connect(DB_PATH)
+            c = conn.cursor()
+            c.execute('''
+                CREATE TABLE IF NOT EXISTS students (
+                    student_id TEXT PRIMARY KEY,
+                    full_name TEXT NOT NULL,
+                    classes TEXT NOT NULL
+                )
+            ''')
+            conn.commit()
+            conn.close()
 
 init_db()
 
@@ -95,9 +100,8 @@ def clear_student(password: str, identifier: str):
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# Helper function to connect to database
 def get_db() -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
-    conn = sqlite3.connect('students.db')
+    conn = sqlite3.connect(DB_PATH)
     return conn, conn.cursor()
 
 @app.route('/add/<name>/<student_id>/<classes>')
