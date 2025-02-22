@@ -4,15 +4,10 @@ FROM python:3.9-slim
 RUN apt-get update && \
     apt-get install -y curl git awscli
 
-# Set working directory
-WORKDIR /app
+WORKDIR /workspace
 
-# Copy application files first
+# Copy application files
 COPY . .
-
-# Ensure backend directory exists and has correct permissions
-RUN mkdir -p /app/backend && \
-    chmod -R 755 /app/backend
 
 # Install Python dependencies
 RUN pip install -r requirements.txt
