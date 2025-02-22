@@ -1,4 +1,4 @@
-let serverIP = localStorage.getItem('serverIP') || 'localhost:5000';
+let serverIP = localStorage.getItem('serverIP') || 'do-i-share-a-class-with-anyone-7a9e11f397f2.herokuapp.com';
 
 // Initialize the input with stored value when page loads
 document.addEventListener('DOMContentLoaded', () => {

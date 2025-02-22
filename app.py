@@ -2,11 +2,15 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import sqlite3
 from typing import List, Tuple
+import requests
+import json
 
 ADMIN_PASSWORD = "password123"
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS
+
+BASE_URL = "https://do-i-share-a-class-with-anyone-7a9e11f397f2.herokuapp.com"
 
 @app.route('/')
 def index():
@@ -84,117 +88,32 @@ def get_db() -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
 @app.route('/add/<name>/<student_id>/<classes>')
 def add_student(name: str, student_id: str, classes: str):
     try:
-        conn, c = get_db()
-        # Replace underscores with spaces in name
-        name = name.replace('_', ' ')
-        # Insert or update student data
-        c.execute('''
-            INSERT OR REPLACE INTO students (student_id, full_name, classes)
-            VALUES (?, ?, ?)
-        ''', (student_id, name, classes))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "success", "message": "Student added successfully"})
+        response = requests.get(f"{BASE_URL}/add/{name}/{student_id}/{classes}")
+        return jsonify(response.json())
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
-
-# Add these new routes before the if __name__ == '__main__' block
 
 @app.route('/get/student/<identifier>')
 def get_student_by_id(identifier: str):
     try:
-        conn, c = get_db()
-        c.execute('SELECT student_id, full_name, classes FROM students WHERE student_id = ?', (identifier,))
-        student = c.fetchone()
-        conn.close()
-        
-        if student:
-            return jsonify({
-                "status": "success",
-                "student_id": student[0],
-                "name": student[1],
-                "classes": student[2]
-            })
-        else:
-            return jsonify({
-                "status": "error",
-                "message": "Student not found"
-            }), 404
-            
+        response = requests.get(f"{BASE_URL}/get/student/{identifier}")
+        return jsonify(response.json())
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/get/student/name/<name>')
 def get_student_by_name(name: str):
     try:
-        conn, c = get_db()
-        # Replace underscores with spaces in name
-        name = name.replace('_', ' ')
-        c.execute('SELECT student_id, full_name, classes FROM students WHERE full_name = ?', (name,))
-        student = c.fetchone()
-        conn.close()
-        
-        if student:
-            return jsonify({
-                "status": "success",
-                "student_id": student[0],
-                "name": student[1],
-                "classes": student[2]
-            })
-        else:
-            return jsonify({
-                "status": "error",
-                "message": "Student not found"
-            }), 404
-            
+        response = requests.get(f"{BASE_URL}/get/student/name/{name}")
+        return jsonify(response.json())
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 @app.route('/get/<classes>')
 def get_students(classes: str):
     try:
-        conn, c = get_db()
-        # Split input classes into a set
-        input_classes = set(classes.split(','))
-        
-        # Get all students from database
-        c.execute('SELECT student_id, full_name, classes FROM students')
-        students = c.fetchall()
-        
-        # Find student with most matching classes, excluding exact matches
-        best_match = None
-        max_matches = 0
-        
-        for student in students:
-            student_classes = set(student[2].split(','))
-            matches = len(input_classes.intersection(student_classes))
-            
-            # Skip if all classes match (likely same person)
-            if input_classes == student_classes:
-                continue
-                
-            if matches > max_matches:
-                max_matches = matches
-                best_match = {
-                    "name": student[1],
-                    "student_id": student[0],
-                    "classes": list(student_classes),
-                    "matching_classes": list(input_classes.intersection(student_classes))
-                }
-        
-        conn.close()
-        
-        if best_match:
-            return jsonify({
-                "status": "success",
-                "match": best_match
-            })
-        else:
-            return jsonify({
-                "status": "error",
-                "message": "No other students with matching classes found"
-            }), 404
-            
+        response = requests.get(f"{BASE_URL}/get/{classes}")
+        return jsonify(response.json())
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
