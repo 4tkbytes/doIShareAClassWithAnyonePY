@@ -4,8 +4,10 @@ set -e
 echo "Authenticating with GitHub..."
 git remote set-url origin "https://${GH_DEPLOY_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
 
-# Store current directory
+# Store current directory and backup backend
 CURRENT_DIR=$(pwd)
+TEMP_DIR=$(mktemp -d)
+cp -r backend/* "$TEMP_DIR/"
 
 echo "Deploying frontend to GitHub Pages..."
 mkdir -p /tmp/frontend-files
@@ -22,13 +24,12 @@ git commit -m "Deploy to GitHub Pages"
 git push -f origin gh-pages
 
 echo "Deploying backend to AWS Elastic Beanstalk..."
-# Return to original directory
-cd "$CURRENT_DIR" || exit 1
+git checkout main
+# Restore backend files
+rm -rf backend
+mkdir -p backend
+cp -r "$TEMP_DIR"/* backend/
 
-echo "Checking backend directory contents:"
-ls -la backend/
-
-# Initialize EB in the backend directory
 cd backend || exit 1
 eb init -p python-3.9 class-share-app --region ap-southeast-2
 eb deploy
