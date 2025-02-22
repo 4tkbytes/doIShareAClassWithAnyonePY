@@ -2,3 +2,4 @@ Flask==3.1.0
 Flask-Cors==5.0.0
 boto3==1.26.137
 awscli==1.27.137
+gunicorn==23.0.0
