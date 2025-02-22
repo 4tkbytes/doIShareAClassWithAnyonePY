@@ -2,7 +2,7 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
-    background-color: #f0f0f0;
+    background-color: #cbbdbf;
 }
 
 .container {
@@ -13,6 +13,7 @@ body {
 header {
     text-align: center;
     margin-bottom: 30px;
+    color: #000000;
 }
 
 .server-config {
@@ -29,7 +30,7 @@ header {
     background: white;
     padding: 20px;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .input-form, .search-form {
@@ -40,13 +41,13 @@ header {
 
 input {
     padding: 8px;
-    border: 1px solid #ddd;
+    border: 1px solid #cbbdbf;
     border-radius: 4px;
 }
 
 button {
     padding: 10px;
-    background-color: #007bff;
+    background-color: #a80f26;
     color: white;
     border: none;
     border-radius: 4px;
@@ -54,7 +55,7 @@ button {
 }
 
 button:hover {
-    background-color: #0056b3;
+    background-color: #000000;
 }
 
 .class-inputs, .class-search {
@@ -65,7 +66,7 @@ button:hover {
 #matchResults {
     margin-top: 20px;
     padding: 10px;
-    background: #f8f9fa;
+    background: #cbbdbf;
     border-radius: 4px;
 }
 
@@ -77,18 +78,18 @@ button:hover {
 
 .remove-class {
     padding: 5px 10px;
-    background-color: #dc3545;
+    background-color: #a80f26;
 }
 
 .match-result {
-    background: #e9ecef;
+    background: #cbbdbf;
     padding: 15px;
     border-radius: 4px;
     margin-top: 15px;
 }
 
 .submit-btn, .search-btn {
-    background-color: #28a745;
+    background-color: #a80f26;
     margin-top: 15px;
 }
 
@@ -101,6 +102,19 @@ button:hover {
 #searchResults {
     margin: 10px 0;
     padding: 10px;
-    background: #f8f9fa;
+    background: #cbbdbf;
     border-radius: 4px;
+}
+
+footer {
+    background-color: #000000 !important;
+    color: #cbbdbf;
+}
+
+footer a {
+    color: #cbbdbf;
+}
+
+footer a:hover {
+    color: #a80f26;
 }
