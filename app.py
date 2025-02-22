@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import sqlite3
@@ -203,4 +204,12 @@ def get_students(classes: str):
 
 if __name__ == '__main__':
     init_db()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    ssl_context = None
+    if os.getenv('ENABLE_HTTPS', 'false').lower() == 'true':
+        ssl_context = 'adhoc'  # This requires installing 'pyOpenSSL'
+    app.run(
+        host='0.0.0.0',
+        port=int(os.getenv('PORT', 5000)),
+        debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true',
+        ssl_context=ssl_context
+    )
