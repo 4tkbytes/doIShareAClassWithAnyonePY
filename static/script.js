@@ -69,7 +69,7 @@ async function submitClasses() {
 
     try {
         const formatted_name = name.replace(/\s+/g, '_');
-        const response = await fetch(`http://${serverIP}/add/${formatted_name}/${studentId}/${classes.join(',')}`);
+        const response = await fetch(`https://${serverIP}/add/${formatted_name}/${studentId}/${classes.join(',')}`);
         if (response.ok) {
             alert('Classes added successfully!');
             // Clear the form
@@ -97,10 +97,10 @@ async function searchStudent() {
     try {
         let response;
         if (identifier.match(/^\d{4,}$/)) {
-            response = await fetch(`http://${serverIP}/get/student/${identifier}`);
+            response = await fetch(`https://${serverIP}/get/student/${identifier}`);
         } else if (identifier.split(' ').length >= 2) {
             const formatted_name = identifier.replace(/\s+/g, '_');
-            response = await fetch(`http://${serverIP}/get/student/name/${formatted_name}`);
+            response = await fetch(`https://${serverIP}/get/student/name/${formatted_name}`);
         }
 
         if (response.ok) {
@@ -137,7 +137,7 @@ async function searchLinks() {
     }
 
     try {
-        const response = await fetch(`http://${serverIP}/get/${classes.join(',')}`);
+        const response = await fetch(`https://${serverIP}/get/${classes.join(',')}`);
         const data = await response.json();
         
         const results = document.getElementById('matchResults');
