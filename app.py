@@ -1,36 +1,53 @@
-import os
 from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
-import psycopg2
+import sqlite3
 from typing import List, Tuple
-import dotenv as env
+import os
+from dotenv import load_dotenv
 
-env.load_dotenv()
+# Load environment variables
+load_dotenv()
 
-ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
-DATABASE_URL = os.getenv('DATABASE_URL')
+# Get admin password from environment variable, fallback to None if not set
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD')
+if not ADMIN_PASSWORD:
+    raise ValueError("ADMIN_PASSWORD environment variable must be set")
 
 app = Flask(__name__)
-CORS(app)  # Enable CORS
+CORS(app)  # Enable CORS with SSL support
+app.config.update(
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SAMESITE='Lax',
+)
+
+@app.before_request
+def before_request():
+    if not request.is_secure and not app.debug:
+        url = request.url.replace('http://', 'https://', 1)
+        return redirect(url, code=301)
 
 @app.route('/')
 def index():
     return render_template('index.html')
 
+
 # Database initialization
 def init_db():
-    conn, c = get_db()
-    try:
-        c.execute('''
-            CREATE TABLE IF NOT EXISTS students (
-                student_id TEXT PRIMARY KEY,
-                full_name TEXT NOT NULL,
-                classes TEXT NOT NULL
-            )
-        ''')
-        conn.commit()
-    finally:
-        conn.close()
+    conn = sqlite3.connect('students.db')
+    c = conn.cursor()
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS students (
+            student_id TEXT PRIMARY KEY,
+            full_name TEXT NOT NULL,
+            classes TEXT NOT NULL
+        )
+    ''')
+    conn.commit()
+    conn.close()
+    
+    # Add these constants at the top of the file, after the imports
+
 
 # Add these new routes before the if __name__ == '__main__' block
 @app.route('/clear/<password>')
@@ -54,10 +71,12 @@ def clear_student(password: str, identifier: str):
     
     try:
         conn, c = get_db()
-        c.execute('DELETE FROM students WHERE student_id = %s', (identifier,))
+        # Try to delete by student ID first, then by name if no rows were affected
+        c.execute('DELETE FROM students WHERE student_id = ?', (identifier,))
         if c.rowcount == 0:
+            # If no rows were deleted, try matching by name (replacing underscores with spaces)
             name = identifier.replace('_', ' ')
-            c.execute('DELETE FROM students WHERE full_name = %s', (name,))
+            c.execute('DELETE FROM students WHERE full_name = ?', (name,))
         
         affected_rows = c.rowcount
         conn.commit()
@@ -73,12 +92,13 @@ def clear_student(password: str, identifier: str):
                 "status": "error", 
                 "message": "No matching student found"
             }), 404
+            
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
 # Helper function to connect to database
-def get_db() -> Tuple[any, any]:
-    conn = psycopg2.connect(DATABASE_URL)
+def get_db() -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
+    conn = sqlite3.connect('students.db')
     return conn, conn.cursor()
 
 @app.route('/add/<name>/<student_id>/<classes>')
@@ -89,10 +109,8 @@ def add_student(name: str, student_id: str, classes: str):
         name = name.replace('_', ' ')
         # Insert or update student data
         c.execute('''
-            INSERT INTO students (student_id, full_name, classes)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (student_id) 
-            DO UPDATE SET full_name = EXCLUDED.full_name, classes = EXCLUDED.classes
+            INSERT OR REPLACE INTO students (student_id, full_name, classes)
+            VALUES (?, ?, ?)
         ''', (student_id, name, classes))
         conn.commit()
         conn.close()
@@ -106,7 +124,7 @@ def add_student(name: str, student_id: str, classes: str):
 def get_student_by_id(identifier: str):
     try:
         conn, c = get_db()
-        c.execute('SELECT student_id, full_name, classes FROM students WHERE student_id = %s', (identifier,))
+        c.execute('SELECT student_id, full_name, classes FROM students WHERE student_id = ?', (identifier,))
         student = c.fetchone()
         conn.close()
         
@@ -132,7 +150,7 @@ def get_student_by_name(name: str):
         conn, c = get_db()
         # Replace underscores with spaces in name
         name = name.replace('_', ' ')
-        c.execute('SELECT student_id, full_name, classes FROM students WHERE full_name = %s', (name,))
+        c.execute('SELECT student_id, full_name, classes FROM students WHERE full_name = ?', (name,))
         student = c.fetchone()
         conn.close()
         
@@ -202,16 +220,10 @@ def get_students(classes: str):
 
 if __name__ == '__main__':
     init_db()
-    ssl_context = None
-    
-    # For Heroku, let it handle SSL termination
-    if not os.getenv('DYNO'):  # Not running on Heroku
-        if os.getenv('ENABLE_HTTPS', 'false').lower() == 'true':
-            ssl_context = 'adhoc'
-    
-    app.run(
-        host='0.0.0.0',
-        port=int(os.getenv('PORT', 5000)),
-        debug=os.getenv('FLASK_DEBUG', 'false').lower() == 'true',
-        ssl_context=ssl_context
-    )
+    # Development settings
+    if app.debug:
+        app.run(host='0.0.0.0', port=5000, debug=True)
+    else:
+        # Production settings
+        port = int(os.environ.get('PORT', 5000))
+        app.run(host='0.0.0.0', port=port, ssl_context='adhoc')

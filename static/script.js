@@ -1,4 +1,4 @@
-let serverIP = localStorage.getItem('serverIP') || 'do-i-share-a-class-with-anyone-7a9e11f397f2.herokuapp.com';
+let serverIP = localStorage.getItem('serverIP') || 'do-i-share-a-class-with-anyone-6f34c22e25f0.herokuapp.com';
 
 // Initialize the input with stored value when page loads
 document.addEventListener('DOMContentLoaded', () => {
@@ -97,10 +97,10 @@ async function searchStudent() {
     try {
         let response;
         if (identifier.match(/^\d{4,}$/)) {
-            response = await fetch(`https://${serverIP}/get/student/${identifier}`);
+            response = await fetch(`http://${serverIP}/get/student/${identifier}`);
         } else if (identifier.split(' ').length >= 2) {
             const formatted_name = identifier.replace(/\s+/g, '_');
-            response = await fetch(`https://${serverIP}/get/student/name/${formatted_name}`);
+            response = await fetch(`http://${serverIP}/get/student/name/${formatted_name}`);
         }
 
         if (response.ok) {
@@ -137,7 +137,7 @@ async function searchLinks() {
     }
 
     try {
-        const response = await fetch(`https://${serverIP}/get/${classes.join(',')}`);
+        const response = await fetch(`http://${serverIP}/get/${classes.join(',')}`);
         const data = await response.json();
         
         const results = document.getElementById('matchResults');
