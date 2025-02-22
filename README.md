@@ -4,7 +4,7 @@ A python server based website that alows users to check who has the closest link
 
 ## Well, how do i use it then?
 
-Currently, you can access the website on [here](https://localhost:5000) (it doesn't work rn)
+Currently, you can access the website on [here](tinyurl.com/doIShareAClassWithAnyone)
 
 Install flask and requests:
 
@@ -15,10 +15,10 @@ pip install flask requests flask-cors
 Then run the program (server if testing):
 
 ```bash
-python server.py
+python app.py
 ```
 
-The website is pretty simple to navigate. If you want to use your own testing server, you have to choice to input your own server at the top.
+The website is pretty simple to navigate. If you want to use your own testing server, you have to choice to input your own server at the top of the website. 
 
 ## TODO()
 
