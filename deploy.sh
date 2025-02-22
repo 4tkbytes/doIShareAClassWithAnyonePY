@@ -32,6 +32,6 @@ cp -r "$TEMP_DIR"/* backend/
 
 cd backend || exit 1
 eb init -p python-3.9 class-share-app --region ap-southeast-2
-eb deploy
+eb deploy production
 
 echo "Deployment complete!"
