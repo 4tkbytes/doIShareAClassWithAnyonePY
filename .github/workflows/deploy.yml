@@ -4,13 +4,17 @@ on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+  pages: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
         with:
-          fetch-depth: 0  # Important for git history
+          fetch-depth: 0
       
       - name: Build and deploy with Docker
         env:
