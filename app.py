@@ -31,22 +31,21 @@ def before_request():
 def index():
     return render_template('index.html')
 
-
-# Database initialization
 def init_db():
-    conn = sqlite3.connect('students.db')
-    c = conn.cursor()
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS students (
-            student_id TEXT PRIMARY KEY,
-            full_name TEXT NOT NULL,
-            classes TEXT NOT NULL
-        )
-    ''')
-    conn.commit()
-    conn.close()
-    
-    # Add these constants at the top of the file, after the imports
+    with app.app_context():
+        conn = sqlite3.connect('students.db')
+        c = conn.cursor()
+        c.execute('''
+            CREATE TABLE IF NOT EXISTS students (
+                student_id TEXT PRIMARY KEY,
+                full_name TEXT NOT NULL,
+                classes TEXT NOT NULL
+            )
+        ''')
+        conn.commit()
+        conn.close()
+
+init_db()
 
 
 # Add these new routes before the if __name__ == '__main__' block
@@ -219,7 +218,6 @@ def get_students(classes: str):
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    init_db()
     # Development settings
     if app.debug:
         app.run(host='0.0.0.0', port=5000, debug=True)
