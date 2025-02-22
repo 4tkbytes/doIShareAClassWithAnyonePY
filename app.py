@@ -2,8 +2,11 @@ from flask import Flask, request, jsonify, render_template
 from flask_cors import CORS
 import sqlite3
 from typing import List, Tuple
+import dotenv as env
 
-ADMIN_PASSWORD = "password123"  # Change this to your desired password
+env.load_dotenv()
+
+ADMIN_PASSWORD = os.getenv('ADMIN_PASSWORD')
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS
