@@ -205,8 +205,12 @@ def get_students(classes: str):
 if __name__ == '__main__':
     init_db()
     ssl_context = None
-    if os.getenv('ENABLE_HTTPS', 'false').lower() == 'true':
-        ssl_context = 'adhoc'  # This requires installing 'pyOpenSSL'
+    
+    # For Heroku, let it handle SSL termination
+    if not os.getenv('DYNO'):  # Not running on Heroku
+        if os.getenv('ENABLE_HTTPS', 'false').lower() == 'true':
+            ssl_context = 'adhoc'
+    
     app.run(
         host='0.0.0.0',
         port=int(os.getenv('PORT', 5000)),
