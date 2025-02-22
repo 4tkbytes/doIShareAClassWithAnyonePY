@@ -4,3 +4,9 @@
 !.elasticbeanstalk/*.cfg.yml
 !.elasticbeanstalk/*.global.yml
 ignore.py
+__pycache__/
+*.pyc
+.env
+.venv
+venv/
+.aws/credentials

@@ -24,4 +24,4 @@ The website is pretty simple to navigate. If you want to use your own testing se
 
 - [X] Turn into website
 - [ ] Improve on UI (its very barebones)
-- [] Add functionality for other schools
+- [ ] Add functionality for other schools
