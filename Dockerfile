@@ -7,23 +7,19 @@ RUN apt-get update && \
 # Set working directory
 WORKDIR /app
 
-# Copy requirements
-COPY requirements.txt .
+# Copy application files first
+COPY . .
 
 # Install Python dependencies
 RUN pip install -r requirements.txt
 
-# Copy application files
-COPY . .
-
 # Install AWS EB CLI
 RUN pip install awsebcli
 
-# Copy deployment scripts
-COPY deploy.sh .
+# Make deploy script executable
 RUN chmod +x deploy.sh
 
-# Configure git for GitHub Pages deployment
+# Configure git
 RUN git config --global user.email "github-actions@github.com" && \
     git config --global user.name "GitHub Actions"
 
