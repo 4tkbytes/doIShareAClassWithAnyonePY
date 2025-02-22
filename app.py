@@ -1,16 +1,45 @@
-from flask import Flask, request, jsonify, render_template
+from flask import Flask, jsonify, render_template
 from flask_cors import CORS
+import requests
+from requests.exceptions import Timeout, RequestException
+import os
 import sqlite3
 from typing import List, Tuple
-import requests
-import json
 
 ADMIN_PASSWORD = "password123"
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS
 
-BASE_URL = "https://do-i-share-a-class-with-anyone-7a9e11f397f2.herokuapp.com"
+# Determine environment and set appropriate BASE_URL
+IS_PRODUCTION = os.environ.get('FLASK_ENV') == 'production'
+BASE_URL = (
+    "https://do-i-share-a-class-with-anyone-7a9e11f397f2.herokuapp.com" 
+    if IS_PRODUCTION 
+    else "http://localhost:5000"
+)
+TIMEOUT_SECONDS = 25
+
+print(f"Running in {'production' if IS_PRODUCTION else 'development'} mode")
+print(f"Using BASE_URL: {BASE_URL}")
+
+def make_request(endpoint: str) -> tuple:
+    try:
+        response = requests.get(
+            f"{BASE_URL}/{endpoint}", 
+            timeout=TIMEOUT_SECONDS
+        )
+        return jsonify(response.json()), 200
+    except Timeout:
+        return jsonify({
+            "status": "error",
+            "message": "Request timed out. Please try again."
+        }), 504
+    except RequestException as e:
+        return jsonify({
+            "status": "error",
+            "message": f"API request failed: {str(e)}"
+        }), 500
 
 @app.route('/')
 def index():
@@ -29,9 +58,6 @@ def init_db():
     ''')
     conn.commit()
     conn.close()
-    
-    # Add these constants at the top of the file, after the imports
-
 
 # Add these new routes before the if __name__ == '__main__' block
 @app.route('/clear/<password>')
@@ -87,36 +113,21 @@ def get_db() -> Tuple[sqlite3.Connection, sqlite3.Cursor]:
 
 @app.route('/add/<name>/<student_id>/<classes>')
 def add_student(name: str, student_id: str, classes: str):
-    try:
-        response = requests.get(f"{BASE_URL}/add/{name}/{student_id}/{classes}")
-        return jsonify(response.json())
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    return make_request(f"add/{name}/{student_id}/{classes}")
 
 @app.route('/get/student/<identifier>')
 def get_student_by_id(identifier: str):
-    try:
-        response = requests.get(f"{BASE_URL}/get/student/{identifier}")
-        return jsonify(response.json())
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    return make_request(f"get/student/{identifier}")
 
 @app.route('/get/student/name/<name>')
 def get_student_by_name(name: str):
-    try:
-        response = requests.get(f"{BASE_URL}/get/student/name/{name}")
-        return jsonify(response.json())
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    return make_request(f"get/student/name/{name}")
 
 @app.route('/get/<classes>')
 def get_students(classes: str):
-    try:
-        response = requests.get(f"{BASE_URL}/get/{classes}")
-        return jsonify(response.json())
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+    return make_request(f"get/{classes}")
 
 if __name__ == '__main__':
     init_db()
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host='0.0.0.0', port=port)
