@@ -2,7 +2,10 @@ body {
     font-family: Arial, sans-serif;
     margin: 0;
     padding: 20px;
+    padding-bottom: 60px; /* Add padding to prevent content from going under footer */
     background-color: #cbbdbf;
+    min-height: 100vh;
+    position: relative;
 }
 
 .container {
@@ -106,9 +109,16 @@ button:hover {
     border-radius: 4px;
 }
 
+/* Update footer styles */
 footer {
-    background-color: #000000 !important;
+    background-color: #000000;
     color: #cbbdbf;
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    padding: 10px 0;
+    left: 0;
 }
 
 footer a {
